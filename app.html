@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Access-Control-Allow-Origin" content="http://example.com">
+    <title>ChotDDT</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ddf3edda;
+        }
+
+        .chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #5381ec52;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(191, 10, 10, 0.1);
+        }
+
+        .message-box {
+            width: 600px;
+            top: 2%;
+            height: 90%;
+            position: fixed;
+            overflow: auto;
+            background-color: azure;
+            border-color: darkgrey;
+        }
+
+        .message-list {
+            display: grid;
+            flex-direction: column;
+            list-style: none;
+            padding: 0;
+        }
+
+        .message {
+            padding: 20px;
+            margin: 5px;
+            border-radius: 10px;
+            display: block;
+        }
+
+        .user-message {
+            width: auto;
+            background-color: #e0f7fa;
+            float: right;
+            margin-left: 30%;
+            margin-right: 3%;
+        }
+
+        .system-message {
+            width: auto;
+            background-color: #f5f5f5;
+            float: left;
+            margin-right: 30%;
+            margin-left: 3%;
+        }
+
+        li {
+            position: relative;
+            height: auto;
+            word-break: break-all;
+            word-wrap: break-word;
+        }
+
+        .input-container {
+            bottom: 2%;
+            display: flex;
+            border-top: 1px solid #e0e0e0;
+            position: fixed;
+            align-items: center;
+            width: 600px;
+            background-color: #ffffff;
+        }
+
+        .input-field {
+            flex-grow: 1;
+            padding: 10px;
+            border: #e0e0e0;
+            outline: none;
+        }
+
+        .send-button {
+            background-color: #2196f3;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        @media screen and (max-width: 600px) {
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #ddf3edda;
+            }
+
+            .chat-container {
+                max-width: 100%;
+                margin: 0 auto;
+                background-color: #5381ec52;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(191, 10, 10, 0.1);
+            }
+
+            .message-box {
+                width: 100%;
+                top: 2%;
+                height: 90%;
+                position: fixed;
+                overflow: auto;
+                background-color: azure;
+                border-color: darkgrey;
+            }
+
+            .input-container {
+                bottom: 2%;
+                display: flex;
+                border-top: 1px solid #e0e0e0;
+                position: fixed;
+                align-items: center;
+                width: 100%;
+                background-color: #ffffff;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="message-box" id="massage">
+            <ul class="message-list">
+                <div>
+                    <li class="message system-message">您好，有什么可以帮您的？</li>
+                </div>
+
+                <!-- Add more messages here -->
+            </ul>
+            <div id="msg_end" style="height:0px; overflow:hidden"></div>
+        </div>
+        <div class="input-container">
+            <input type="text" class="input-field" placeholder="请输入...">
+            <button class="send-button">发送</button>
+        </div>
+    </div>
+    <script>
+        // JavaScript logic for handling user input and displaying messages
+        const inputField = document.querySelector('.input-field');
+        const sendButton = document.querySelector('.send-button');
+        const messageList = document.querySelector('.message-list');
+
+        sendButton.addEventListener('click', () => {
+            const userMessage = inputField.value;
+            if (userMessage.trim() !== '') {
+                // Add user message to the list
+                const userMessageElement = document.createElement('li');
+                const userMessageDiv = document.createElement('div');
+                userMessageElement.classList.add('message', 'user-message');
+                userMessageElement.textContent = userMessage;
+                userMessageDiv.appendChild(userMessageElement)
+                messageList.appendChild(userMessageDiv);
+                // Clear input field
+                inputField.value = '';
+                const systemMessageElement = document.createElement('li');
+                const systemMessageDiv = document.createElement('div');
+                systemMessageElement.classList.add('message', 'system-message');
+                systemMessageElement.textContent = "响应中...";
+                systemMessageDiv.appendChild(systemMessageElement)
+                messageList.appendChild(systemMessageDiv);
+                updateScroll();
+                axios.post('http://127.0.0.1:8081/message', { 'message': userMessage })
+                    .then(function (response) {
+                        console.log(response);
+                        // Simulate system response (you can replace this with actual server communication)
+                        setTimeout(() => {
+                            systemMessageElement.textContent = response.data.reply;
+                            updateScroll();
+                        }, 500);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                        systemMessageElement.textContent = error;
+                        updateScroll();
+                    });
+
+                // // Simulate system response (you can replace this with actual server communication)
+                // setTimeout(() => {
+                //     const systemMessageElement = document.createElement('li');
+                //     const systemMessageDiv = document.createElement('div');
+                //     systemMessageElement.classList.add('message', 'system-message');
+                //     systemMessageElement.textContent = 'I received your message!';
+                //     systemMessageDiv.appendChild(systemMessageElement)
+                //     messageList.appendChild(systemMessageDiv);
+                // }, 500);
+            }
+        });
+        inputField.addEventListener("keyup", function (event) {
+            if (event.keyCode === 13) { // 按下回车键的键码是13
+                event.preventDefault(); // 阻止回车键的默认行为
+                sendButton.click(); // 提交表单
+            }
+        });
+        function updateScroll() {
+            var element = document.getElementById("massage");
+            element.scrollTop = element.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
